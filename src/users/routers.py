@@ -9,7 +9,7 @@ from src.database import get_async_session
 from src.events.schemas import EventResponse
 from src.users.models import User
 from src.users.schemas import UserCreate, UserResponse, UserUpdate, UserLogin
-from src.security import sign_jwt
+from src.security import sign_jwt,JWTBearer
 
 router = APIRouter(
     prefix="/users",
@@ -51,6 +51,14 @@ async def login(payload:UserLogin, session: AsyncSession = Depends(get_async_ses
     else:
         return sign_jwt(result.id)
 
+@router.get("/me", response_model=UserResponse)
+async def me(session: AsyncSession = Depends(get_async_session) ,user_id:int = Depends(JWTBearer())):
+    query = select(User).where(User.id == user_id)
+    query_result = await session.scalars(query)
+    result = query_result.first()
+    if result is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    return result
 
 @router.get("/{user_id}", response_model=UserResponse)
 async def get_user(user_id: int, session: AsyncSession = Depends(get_async_session)):

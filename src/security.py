@@ -36,4 +36,4 @@ class JWTBearer(HTTPBearer):
             raise HTTPException(status_code=403, detail='Invalid authentication')
         decoded_token = decode_jwt(credentials.credentials)
 
-        return await decoded_token.get('user_id')
+        return decoded_token.get('user_id')

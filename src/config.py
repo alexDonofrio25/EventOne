@@ -22,6 +22,10 @@ class Settings(BaseSettings):
     algorithm: str
     access_token_expire_minutes: int
 
+    # config for redis
+    redis_host: str
+    redis_port: int
+
 
 
 settings = Settings()
