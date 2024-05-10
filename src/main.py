@@ -22,7 +22,7 @@ app.include_router(comments_router)
 
 @app.on_event("startup")
 async def startup():
-    redis = aioredis.from_url("redis://localhost")
+    redis = aioredis.from_url("redis://{s.redis_host}:{s.redis_port}")
     FastAPICache.init(RedisBackend(redis), prefix="fastapi-cache")
 
 @app.get('/lunghissima')
