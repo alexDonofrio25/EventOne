@@ -8,7 +8,8 @@ from sqlalchemy.future import select
 from src.database import get_async_session
 from src.events.schemas import EventResponse
 from src.users.models import User
-from src.users.schemas import UserCreate, UserResponse, UserUpdate
+from src.users.schemas import UserCreate, UserResponse, UserUpdate, UserLogin
+from src.security import sign_jwt
 
 router = APIRouter(
     prefix="/users",
@@ -29,7 +30,7 @@ async def create_user(user: UserCreate, session: AsyncSession = Depends(get_asyn
     new_user = User(
         username=user.username,
         email=user.email,
-        password=user.password,
+        password_setter=user.password,
         is_admin=False
     )
 
@@ -39,6 +40,16 @@ async def create_user(user: UserCreate, session: AsyncSession = Depends(get_asyn
     except IntegrityError:
         raise HTTPException(status_code=400, detail="Username or email already in use")
     return new_user
+
+@router.post("/login")
+async def login(payload:UserLogin, session: AsyncSession = Depends(get_async_session)):
+    query = select(User).where(User.username == payload.username)
+    query_result = await session.scalars(query)
+    result = query_result.first()
+    if result is None or result.check_password(payload.password) == False:
+        raise HTTPException(status_code=404, detail="Wrong username or password")
+    else:
+        return sign_jwt(result.id)
 
 
 @router.get("/{user_id}", response_model=UserResponse)
